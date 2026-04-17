@@ -1,12 +1,17 @@
 {
   "name": "mathning",
   "private": true,
+  "main": "apps/mobile/index.ts",
   "workspaces": [
     "apps/mobile",
     "packages/*"
   ],
   "scripts": {
     "build:shared": "npm run build -w @mathning/shared",
-    "dev:mobile": "npm run build:shared && npm run start -w mobile"
+    "start": "expo start ./apps/mobile",
+    "start:clear": "expo start ./apps/mobile --clear",
+    "android": "expo start ./apps/mobile --android",
+    "ios": "expo start ./apps/mobile --ios",
+    "dev:mobile": "npm run build:shared && expo start ./apps/mobile"
   }
 }
