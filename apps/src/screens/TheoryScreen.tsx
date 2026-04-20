@@ -54,7 +54,13 @@ type LessonExample = {
     bottom: number;
     operationSymbol: "+" | "-" | "x" | "÷";
     note: string;
+    longDivisionLines?: string[];
   };
+};
+
+type RuleNote = {
+  title: string;
+  text: string;
 };
 
 const OPERATION_UI: Record<
@@ -66,6 +72,74 @@ const OPERATION_UI: Record<
   multiply: { icon: "close", color: "#F59E0B", visualColor: "#F59E0B" },
   divide: { icon: "git-compare-outline", color: "#2563EB", visualColor: "#2563EB" },
 };
+
+function getRuleNotes(operation: Operation): RuleNote[] {
+  if (operation === "add") {
+    return [
+      {
+        title: "Ordem das parcelas",
+        text: "A ordem não altera o resultado: 2 + 3 = 3 + 2.",
+      },
+      {
+        title: "Com reserva (vai um)",
+        text: "Quando a soma das unidades passa de 9, agrupamos 10 unidades em 1 dezena.",
+      },
+      {
+        title: "Com números negativos",
+        text: "Somar um número negativo equivale a diminuir: 8 + (-3) = 5.",
+      },
+    ];
+  }
+
+  if (operation === "subtract") {
+    return [
+      {
+        title: "Resultado negativo",
+        text: "Se o segundo número for maior, o resultado fica negativo: 7 - 20 = -13.",
+      },
+      {
+        title: "Empréstimo",
+        text: "Quando não há unidades suficientes, pegamos 1 dezena da coluna ao lado.",
+      },
+      {
+        title: "Subtrair negativo",
+        text: "Subtrair um número negativo vira soma: 5 - (-2) = 7.",
+      },
+    ];
+  }
+
+  if (operation === "multiply") {
+    return [
+      {
+        title: "Sinais",
+        text: "Sinais iguais dão positivo; sinais diferentes dão negativo.",
+      },
+      {
+        title: "Elemento neutro",
+        text: "Qualquer número vezes 1 mantém o valor original.",
+      },
+      {
+        title: "Multiplicação por zero",
+        text: "Qualquer número vezes 0 resulta em 0.",
+      },
+    ];
+  }
+
+  return [
+    {
+      title: "Divisão por zero",
+      text: "Não existe divisão por zero; essa conta é indefinida.",
+    },
+    {
+      title: "Resto da divisão",
+      text: "Quando não divide exato, sobra um resto (ex.: 7 ÷ 2 = 3, resto 1).",
+    },
+    {
+      title: "Sinais",
+      text: "Sinais iguais dão positivo; sinais diferentes dão negativo.",
+    },
+  ];
+}
 
 function getExamples(operation: Operation): LessonExample[] {
   if (operation === "add") {
@@ -123,16 +197,16 @@ function getExamples(operation: Operation): LessonExample[] {
       {
         id: "ex-2",
         title: "Exemplo 2",
-        expression: "9 - 4 = 5",
-        a: 9,
-        b: 4,
+        expression: "4 - 9 = -5",
+        a: 4,
+        b: 9,
         result: 5,
-        explanation: "Se tirarmos 4 de 9, sobram 5.",
+        explanation: "Como 9 é maior que 4, passamos do zero e o resultado fica -5.",
         schoolMath: {
-          top: 9,
-          bottom: 4,
+          top: 4,
+          bottom: 9,
           operationSymbol: "-",
-          note: "Subtraímos as unidades: 9 - 4 = 5.",
+          note: "Na subtração, quando o segundo número é maior, o resultado é negativo.",
         },
       },
     ];
@@ -177,31 +251,34 @@ function getExamples(operation: Operation): LessonExample[] {
     {
       id: "ex-1",
       title: "Exemplo 1",
-      expression: "8 ÷ 2 = 4",
-      a: 8,
-      b: 2,
+      expression: "12 ÷ 3 = 4",
+      a: 12,
+      b: 3,
       result: 4,
-      explanation: "Ao dividir 8 em 2 partes iguais, cada parte fica com 4.",
+      explanation: "12 dividido em 3 grupos iguais resulta em 4 para cada grupo.",
       schoolMath: {
-        top: 8,
-        bottom: 2,
+        top: 12,
+        bottom: 3,
         operationSymbol: "÷",
-        note: "Procuramos quantas vezes o 2 cabe no 8: cabe 4 vezes.",
+        note: "Formato em chave: dividendo à esquerda, divisor à direita e quociente no topo.",
+        longDivisionLines: [" 12 |3", "-12 |4", "  0"],
       },
     },
     {
       id: "ex-2",
       title: "Exemplo 2",
-      expression: "12 ÷ 3 = 4",
-      a: 12,
-      b: 3,
-      result: 4,
-      explanation: "Ao dividir 12 em 3 partes iguais, cada parte fica com 4.",
+      expression: "14 ÷ 4 = 3 (resto 2)",
+      a: 14,
+      b: 4,
+      result: 3,
+      explanation:
+        "14 dividido em 4 grupos dá 3 para cada grupo, e sobram 2 (resto 2).",
       schoolMath: {
-        top: 12,
-        bottom: 3,
+        top: 14,
+        bottom: 4,
         operationSymbol: "÷",
-        note: "Procuramos quantas vezes o 3 cabe no 12: cabe 4 vezes.",
+        note: "Quando não dá para continuar a divisão exata, o valor que sobra é o resto.",
+        longDivisionLines: [" 14 |4", "-12 |3", "  2"],
       },
     },
   ];
@@ -211,6 +288,39 @@ function renderTokens(count: number, color: string) {
   return Array.from({ length: count }).map((_, i) => (
     <View key={i} style={[styles.token, { borderColor: color, backgroundColor: `${color}22` }]}>
       <View style={[styles.tokenDot, { backgroundColor: color }]} />
+    </View>
+  ));
+}
+
+function getDivisionVisualData(example: LessonExample) {
+  const dividend = example.schoolMath.top;
+  const divisor = example.schoolMath.bottom;
+  const quotient = Math.floor(dividend / divisor);
+  const remainder = dividend % divisor;
+  return { dividend, divisor, quotient, remainder };
+}
+
+function getExpressionResult(expression: string): string | null {
+  const parts = expression.split("=");
+  if (parts.length < 2) return null;
+  return parts[1]?.trim() ?? null;
+}
+
+function isNegativeSubtractionExample(operation: Operation, example: LessonExample): boolean {
+  return operation === "subtract" && example.a < example.b;
+}
+
+function renderMultiplicationMatrix(rows: number, cols: number, color: string) {
+  return Array.from({ length: rows }).map((_, rowIdx) => (
+    <View key={`row-${rowIdx}`} style={styles.matrixRow}>
+      {Array.from({ length: cols }).map((_, colIdx) => (
+        <View
+          key={`dot-${rowIdx}-${colIdx}`}
+          style={[styles.matrixDot, { borderColor: color, backgroundColor: `${color}22` }]}
+        >
+          <View style={[styles.matrixDotInner, { backgroundColor: color }]} />
+        </View>
+      ))}
     </View>
   ));
 }
@@ -302,6 +412,7 @@ export function TheoryScreen() {
     [lesson.operation],
   );
   const examples = useMemo(() => getExamples(lesson.operation), [lesson.operation]);
+  const ruleNotes = useMemo(() => getRuleNotes(lesson.operation), [lesson.operation]);
   const operationName = lesson.title;
 
   return (
@@ -359,6 +470,16 @@ export function TheoryScreen() {
                 <Text style={styles.vocabStrong}>Símbolo:</Text> o sinal usado nesta operação.
               </Text>
             </View>
+
+            <View style={[styles.card, cardShadow]}>
+              <Text style={styles.sectionTitle}>Regrinhas importantes</Text>
+              {ruleNotes.map((rule) => (
+                <View key={rule.title} style={styles.ruleItem}>
+                  <Text style={styles.ruleTitle}>{rule.title}</Text>
+                  <Text style={styles.ruleText}>{rule.text}</Text>
+                </View>
+              ))}
+            </View>
           </>
         ) : (
           <>
@@ -368,9 +489,7 @@ export function TheoryScreen() {
                   <View
                     style={[styles.exampleNumberBadge, { backgroundColor: operationUi.visualColor }]}
                   >
-                    <Text style={styles.exampleNumberBadgeTxt}>
-                      {example.id.endsWith("1") ? "1" : "2"}
-                    </Text>
+                    <Text style={styles.exampleNumberBadgeTxt}>{example.id.replace("ex-", "")}</Text>
                   </View>
                   <Text style={styles.exampleTitle}>{example.title}</Text>
                 </View>
@@ -381,32 +500,148 @@ export function TheoryScreen() {
 
                 <Text style={styles.visualLabel}>Visualização:</Text>
                 <View style={styles.visualBox}>
-                  <View style={styles.visualRow}>
-                    <View style={styles.tokenWrap}>
-                      {renderTokens(example.a, operationUi.visualColor)}
+                  {lesson.operation === "divide" ? (
+                    <View style={styles.divideVisualWrap}>
+                      <View style={styles.divideSummaryRow}>
+                        <View style={styles.divideSummaryPill}>
+                          <Text style={styles.divideSummaryKey}>Total</Text>
+                          <Text style={styles.divideSummaryVal}>
+                            {getDivisionVisualData(example).dividend}
+                          </Text>
+                        </View>
+                        <Text style={styles.divideArrow}>→</Text>
+                        <View style={styles.divideSummaryPill}>
+                          <Text style={styles.divideSummaryKey}>Grupos</Text>
+                          <Text style={styles.divideSummaryVal}>
+                            {getDivisionVisualData(example).divisor}
+                          </Text>
+                        </View>
+                        <Text style={styles.divideArrow}>→</Text>
+                        <View style={styles.divideSummaryPill}>
+                          <Text style={styles.divideSummaryKey}>Cada grupo</Text>
+                          <Text style={styles.divideSummaryVal}>
+                            {getDivisionVisualData(example).quotient}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.divideGroups}>
+                        {Array.from({ length: getDivisionVisualData(example).divisor }).map(
+                          (_, idx) => (
+                            <View key={`${example.id}-group-${idx}`} style={styles.divideGroupCard}>
+                              <Text style={styles.divideGroupLabel}>Grupo {idx + 1}</Text>
+                              <Text style={styles.divideGroupValue}>
+                                {getDivisionVisualData(example).quotient}
+                              </Text>
+                            </View>
+                          ),
+                        )}
+                      </View>
+
+                      {getDivisionVisualData(example).remainder > 0 ? (
+                        <View style={styles.remainderBox}>
+                          <Ionicons
+                            name="information-circle-outline"
+                            size={14}
+                            color={colors.warning}
+                          />
+                          <Text style={styles.remainderTxt}>
+                            Sobram {getDivisionVisualData(example).remainder} (resto).
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={styles.remainderBoxOk}>
+                          <Ionicons
+                            name="checkmark-circle-outline"
+                            size={14}
+                            color={colors.successDark}
+                          />
+                          <Text style={styles.remainderTxtOk}>Divisão exata (resto 0).</Text>
+                        </View>
+                      )}
                     </View>
-                    <Text style={styles.visualOp}>{example.schoolMath.operationSymbol}</Text>
-                    <View style={styles.tokenWrap}>
-                      {renderTokens(example.b, operationUi.visualColor)}
+                  ) : isNegativeSubtractionExample(lesson.operation, example) ? (
+                    <View style={styles.negativeSubWrap}>
+                      <Text style={styles.negativeSubTitle}>Passo a passo no eixo numérico</Text>
+                      <View style={styles.negativeSubStep}>
+                        <Text style={styles.negativeSubStepTxt}>1) Começamos no número 4.</Text>
+                      </View>
+                      <View style={styles.negativeSubStep}>
+                        <Text style={styles.negativeSubStepTxt}>
+                          2) Tirar 9 é andar 9 casas para a esquerda.
+                        </Text>
+                      </View>
+                      <View style={styles.negativeSubStep}>
+                        <Text style={styles.negativeSubStepTxt}>
+                          3) Andamos 4 casas até o 0, e mais 5 casas para o lado negativo.
+                        </Text>
+                      </View>
+
+                      <View style={styles.numberLineRow}>
+                        <Text style={styles.numberLinePoint}>4</Text>
+                        <Text style={styles.numberLineArrow}>← 4 casas</Text>
+                        <Text style={styles.numberLinePoint}>0</Text>
+                        <Text style={styles.numberLineArrow}>← 5 casas</Text>
+                        <Text style={styles.numberLinePointResult}>-5</Text>
+                      </View>
                     </View>
-                    <Text style={styles.visualOp}>=</Text>
-                    <View style={styles.tokenWrap}>
-                      {renderTokens(example.result, operationUi.visualColor)}
+                  ) : lesson.operation === "multiply" ? (
+                    <View style={styles.matrixWrap}>
+                      <Text style={styles.matrixLabel}>
+                        {example.a} linhas com {example.b} bolinhas cada
+                      </Text>
+                      <View style={styles.matrixGrid}>
+                        {renderMultiplicationMatrix(
+                          example.a,
+                          example.b,
+                          operationUi.visualColor,
+                        )}
+                      </View>
+                      <Text style={styles.matrixResultTxt}>
+                        Total: {example.a} x {example.b} = {example.result}
+                      </Text>
                     </View>
-                  </View>
+                  ) : (
+                    <View style={styles.visualRow}>
+                      <View style={styles.tokenWrap}>
+                        {renderTokens(example.a, operationUi.visualColor)}
+                      </View>
+                      <Text style={styles.visualOp}>{example.schoolMath.operationSymbol}</Text>
+                      <View style={styles.tokenWrap}>
+                        {renderTokens(example.b, operationUi.visualColor)}
+                      </View>
+                      <Text style={styles.visualOp}>=</Text>
+                      <View style={styles.tokenWrap}>
+                        {renderTokens(example.result, operationUi.visualColor)}
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.schoolBox}>
-                  <Text style={styles.schoolTitle}>Conta tradicional (escola)</Text>
-                  <View style={styles.schoolCalc}>
-                    <Text style={styles.schoolLine}>{String(example.schoolMath.top).padStart(3, " ")}</Text>
-                    <Text style={styles.schoolLine}>
-                      {example.schoolMath.operationSymbol}
-                      {String(example.schoolMath.bottom).padStart(2, " ")}
-                    </Text>
-                    <View style={styles.schoolDivider} />
-                    <Text style={styles.schoolLine}>{String(example.result).padStart(3, " ")}</Text>
-                  </View>
+                  <Text style={styles.schoolTitle}>Conta armada</Text>
+                  {lesson.operation === "divide" && example.schoolMath.longDivisionLines ? (
+                    <View style={styles.longDivisionWrap}>
+                      {example.schoolMath.longDivisionLines.map((line, idx) => (
+                        <Text key={`${example.id}-line-${idx}`} style={styles.longDivisionLine}>
+                          {line}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={styles.schoolCalc}>
+                      <Text style={styles.schoolLine}>{String(example.schoolMath.top).padStart(3, " ")}</Text>
+                      <Text style={styles.schoolLine}>
+                        {example.schoolMath.operationSymbol}
+                        {String(example.schoolMath.bottom).padStart(2, " ")}
+                      </Text>
+                      <View style={styles.schoolDivider} />
+                      <Text style={styles.schoolLine}>
+                        {getExpressionResult(example.expression) ??
+                          String(example.result).padStart(3, " ")}
+                      </Text>
+                    </View>
+                  )}
                   <Text style={styles.schoolNote}>{example.schoolMath.note}</Text>
                 </View>
 
@@ -513,6 +748,14 @@ const styles = StyleSheet.create({
   },
   vocabLine: { fontSize: 14, color: colors.text, marginBottom: 8, lineHeight: 22 },
   vocabStrong: { fontWeight: "700" },
+  ruleItem: {
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  ruleTitle: { fontSize: 14, fontWeight: "700", color: colors.text, marginBottom: 4 },
+  ruleText: { fontSize: 13, color: colors.muted, lineHeight: 19 },
   exampleTitleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
   exampleNumberBadge: {
     width: 24,
@@ -553,6 +796,112 @@ const styles = StyleSheet.create({
   },
   tokenDot: { width: 9, height: 9, borderRadius: 5 },
   visualOp: { fontSize: 18, fontWeight: "700", color: colors.muted },
+  negativeSubWrap: {
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E5D8FF",
+    backgroundColor: "#FAF7FF",
+    padding: 10,
+  },
+  negativeSubTitle: { fontSize: 13, fontWeight: "700", color: colors.primaryText },
+  negativeSubStep: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#EEE8FF",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  negativeSubStepTxt: { fontSize: 12, color: colors.text, lineHeight: 17 },
+  numberLineRow: {
+    marginTop: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+    backgroundColor: "#F3EEFF",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+  },
+  numberLinePoint: { fontSize: 13, fontWeight: "700", color: colors.text },
+  numberLineArrow: { fontSize: 12, color: colors.muted, fontWeight: "600" },
+  numberLinePointResult: { fontSize: 13, fontWeight: "800", color: "#7C3AED" },
+  matrixWrap: {
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    backgroundColor: "#FFFBEB",
+    padding: 10,
+  },
+  matrixLabel: { fontSize: 12, color: colors.text, fontWeight: "600" },
+  matrixGrid: { gap: 6, alignSelf: "flex-start" },
+  matrixRow: { flexDirection: "row", gap: 6 },
+  matrixDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  matrixDotInner: { width: 9, height: 9, borderRadius: 5 },
+  matrixResultTxt: { fontSize: 12, color: colors.primaryText, fontWeight: "700" },
+  divideVisualWrap: { gap: 10 },
+  divideSummaryRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  divideSummaryPill: {
+    minWidth: 74,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "#EEF2FF",
+    borderWidth: 1,
+    borderColor: "#DDE4FF",
+  },
+  divideSummaryKey: { fontSize: 10, color: colors.muted, fontWeight: "700" },
+  divideSummaryVal: { fontSize: 14, color: colors.primaryText, fontWeight: "800" },
+  divideArrow: { fontSize: 14, color: colors.muted, fontWeight: "700" },
+  divideGroups: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  divideGroupCard: {
+    width: 72,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#DDE4FF",
+    backgroundColor: "#F8FAFF",
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    alignItems: "center",
+  },
+  divideGroupLabel: { fontSize: 11, color: colors.muted, marginBottom: 4 },
+  divideGroupValue: { fontSize: 18, fontWeight: "800", color: colors.primaryText },
+  remainderBox: {
+    marginTop: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.warningBg,
+    borderWidth: 1,
+    borderColor: colors.warningBorder,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  remainderTxt: { color: colors.warning, fontSize: 12, fontWeight: "600" },
+  remainderBoxOk: {
+    marginTop: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.successBg,
+    borderWidth: 1,
+    borderColor: "#C7F3D5",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  remainderTxtOk: { color: colors.successDark, fontSize: 12, fontWeight: "600" },
   schoolBox: {
     borderRadius: 12,
     borderWidth: 1,
@@ -579,6 +928,22 @@ const styles = StyleSheet.create({
   },
   schoolDivider: { height: 1, backgroundColor: "#BFC4D9", marginVertical: 4 },
   schoolNote: { marginTop: 8, fontSize: 12, color: colors.muted, lineHeight: 18 },
+  longDivisionWrap: {
+    alignSelf: "flex-start",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "#E4E7F7",
+    minWidth: 88,
+  },
+  longDivisionLine: {
+    fontSize: 15,
+    lineHeight: 18,
+    color: colors.text,
+    fontFamily: Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }),
+  },
   answerBox: {
     backgroundColor: colors.successBg,
     borderColor: "#C7F3D5",
