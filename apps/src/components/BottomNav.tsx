@@ -18,13 +18,13 @@ const TABS: {
   iconActive: React.ComponentProps<typeof Ionicons>["name"];
 }[] = [
   { key: "Dashboard", label: "Início", icon: "home-outline", iconActive: "home" },
-  { key: "LearningPath", label: "Trilha", icon: "book-outline", iconActive: "book" },
   {
     key: "Teoria",
     label: "Teoria",
     icon: "document-text-outline",
     iconActive: "document-text",
   },
+  { key: "LearningPath", label: "Trilha", icon: "book-outline", iconActive: "book" },
   {
     key: "Performance",
     label: "Desempenho",

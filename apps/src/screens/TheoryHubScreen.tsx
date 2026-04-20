@@ -31,6 +31,13 @@ const cardShadow = Platform.select({
   default: {},
 });
 
+const THEORY_VISUAL = {
+  add: { color: "#10B981", icon: "add-circle" as const, label: "Adição" },
+  subtract: { color: "#A855F7", icon: "remove-circle" as const, label: "Subtração" },
+  multiply: { color: "#F59E0B", icon: "close-circle" as const, label: "Multiplicação" },
+  divide: { color: "#2563EB", icon: "git-compare" as const, label: "Divisão" },
+};
+
 /**
  * Tela principal de Teoria (mesmo nível da Trilha): lista fases e assuntos para ler antes de praticar.
  */
@@ -54,41 +61,55 @@ export function TheoryHubScreen() {
   return (
     <View style={styles.shell}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.h1}>Teoria dos assuntos</Text>
-        <Text style={styles.sub}>
-          Leia as explicações antes de ir à prática. Toque no assunto para abrir o texto; use
-          &quot;Pratique&quot; para exercícios. Acompanhe o progresso na aba Trilha.
-        </Text>
+        <View style={[styles.hero, cardShadow]}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroIconWrap}>
+              <Ionicons name="library-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.heroTextWrap}>
+              <Text style={styles.heroTitle}>Biblioteca de Teoria</Text>
+              <Text style={styles.heroSub}>
+                Estude primeiro, pratique depois. Aqui você lê os conceitos com exemplos visuais.
+              </Text>
+            </View>
+          </View>
+          <View style={styles.heroMetaRow}>
+            <View style={styles.heroMetaPill}>
+              <Ionicons name="book-outline" size={14} color={colors.primary} />
+              <Text style={styles.heroMetaTxt}>
+                {activeModules.reduce((acc, m) => acc + m.lessons.length, 0)} assuntos
+              </Text>
+            </View>
+            <View style={styles.heroMetaPill}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={colors.successDark} />
+              <Text style={styles.heroMetaTxt}>{completed.length} concluídos</Text>
+            </View>
+          </View>
+        </View>
 
         {activeModules.map((mod, phaseIdx) => {
-          const total = mod.lessons.length;
-          const doneCount = mod.lessons.filter((l) => completed.includes(l.id)).length;
-          const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
-
           return (
-            <View key={mod.id}>
-              <View style={[styles.phaseCard, cardShadow]}>
-                <View style={styles.phaseTop}>
-                  <View style={styles.phaseBadge}>
-                    <Text style={styles.phaseBadgeTxt}>{phaseIdx + 1}</Text>
+            <View key={mod.id} style={styles.moduleSection}>
+              <View style={styles.moduleHead}>
+                <View style={styles.moduleHeadLeft}>
+                  <View style={styles.moduleBadge}>
+                    <Text style={styles.moduleBadgeTxt}>{phaseIdx + 1}</Text>
                   </View>
-                  <View style={styles.phaseHead}>
-                    <Text style={styles.phaseLabel}>Fase {phaseIdx + 1}</Text>
-                    <Text style={styles.phaseTitle}>{mod.title}</Text>
-                    <Text style={styles.phaseDesc}>{mod.description}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.moduleLabel}>Fase {phaseIdx + 1}</Text>
+                    <Text style={styles.moduleTitle}>{mod.title}</Text>
                   </View>
                 </View>
-                <Text style={styles.progressMeta}>
-                  {doneCount} de {total} concluídas na trilha · {pct}%
-                </Text>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${pct}%` }]} />
+                <View style={styles.moduleReadPill}>
+                  <Text style={styles.moduleReadPillTxt}>Somente leitura</Text>
                 </View>
               </View>
+              <Text style={styles.moduleDesc}>{mod.description}</Text>
 
               {mod.lessons.map((lesson) => {
                 const isDone = completed.includes(lesson.id);
                 const open = isLessonUnlocked(mod.id, lesson.id, completed);
+                const visual = THEORY_VISUAL[lesson.operation];
                 const goTheoryDetail = () =>
                   navigation.navigate("TheoryDetail", {
                     moduleId: mod.id,
@@ -104,71 +125,92 @@ export function TheoryHubScreen() {
                   <View
                     key={lesson.id}
                     style={[
-                      styles.lessonRow,
-                      isDone && styles.lessonDone,
-                      open && !isDone && styles.lessonOpen,
-                      !open && styles.lessonLocked,
+                      styles.topicCard,
+                      cardShadow,
+                      !open && styles.topicCardLocked,
                     ]}
                   >
-                    <Pressable
-                      disabled={!open}
-                      onPress={goTheoryDetail}
-                      style={({ pressed }) => [
-                        styles.lessonMain,
-                        pressed && open && { opacity: 0.92 },
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Ler teoria: ${lesson.title}`}
-                    >
+                    <View style={styles.topicTop}>
                       <View
                         style={[
-                          styles.lessonIconCircle,
-                          isDone && styles.lessonIconDone,
-                          open && !isDone && styles.lessonIconOpen,
-                          !open && styles.lessonIconLocked,
+                          styles.topicIcon,
+                          { backgroundColor: `${visual.color}1F` },
                         ]}
                       >
                         <Ionicons
-                          name={
-                            isDone ? "checkmark" : open ? "book-outline" : "lock-closed"
-                          }
+                          name={open ? visual.icon : "lock-closed"}
                           size={20}
-                          color={
-                            isDone
-                              ? "#fff"
-                              : open
-                                ? colors.primary
-                                : colors.locked
-                          }
+                          color={open ? visual.color : colors.locked}
                         />
                       </View>
-                      <View style={styles.lessonTitleWrap}>
-                        <Text
-                          style={[styles.lessonTitle, !open && styles.lessonTitleOff]}
-                          numberOfLines={2}
-                        >
-                          {lesson.title}
-                        </Text>
-                        {isDone && (
-                          <View style={styles.completePill}>
-                            <Text style={styles.completePillTxt}>Completo</Text>
+                      <View style={styles.topicMain}>
+                        <View style={styles.topicTitleRow}>
+                          <Text style={[styles.topicTitle, !open && styles.topicTitleOff]}>
+                            {lesson.title}
+                          </Text>
+                          <View style={[styles.operationPill, { backgroundColor: `${visual.color}1A` }]}>
+                            <Text style={[styles.operationPillTxt, { color: visual.color }]}>
+                              {visual.label}
+                            </Text>
                           </View>
-                        )}
+                        </View>
+                        <Text style={[styles.topicSummary, !open && styles.topicSummaryOff]}>
+                          {lesson.summary}
+                        </Text>
+                        <View style={styles.topicFoot}>
+                          <View style={styles.metaItem}>
+                            <Ionicons name="time-outline" size={14} color={colors.muted} />
+                            <Text style={styles.metaTxt}>Leitura rápida</Text>
+                          </View>
+                          <View style={styles.metaItem}>
+                            <Ionicons name="eye-outline" size={14} color={colors.muted} />
+                            <Text style={styles.metaTxt}>Exemplos visuais</Text>
+                          </View>
+                        </View>
                       </View>
-                    </Pressable>
-                    {open ? (
+                    </View>
+
+                    <View style={styles.topicActions}>
                       <Pressable
-                        onPress={goPractice}
+                        disabled={!open}
+                        onPress={goTheoryDetail}
                         style={({ pressed }) => [
-                          styles.pratiqueBtn,
-                          pressed && { opacity: 0.9 },
+                          styles.readBtn,
+                          pressed && open && { opacity: 0.9 },
+                          !open && styles.readBtnDisabled,
                         ]}
                         accessibilityRole="button"
-                        accessibilityLabel={`Praticar ${lesson.title}`}
+                        accessibilityLabel={`Ler teoria: ${lesson.title}`}
                       >
-                        <Text style={styles.pratiqueBtnTxt}>Pratique</Text>
+                        <Ionicons
+                          name={open ? "book-outline" : "lock-closed-outline"}
+                          size={16}
+                          color={open ? colors.primary : colors.locked}
+                        />
+                        <Text style={[styles.readBtnTxt, !open && styles.readBtnTxtOff]}>
+                          {open ? "Ler teoria" : "Bloqueado"}
+                        </Text>
                       </Pressable>
-                    ) : null}
+                      {open ? (
+                        <Pressable
+                          onPress={goPractice}
+                          style={({ pressed }) => [
+                            styles.practiceBtn,
+                            pressed && { opacity: 0.9 },
+                          ]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Praticar ${lesson.title}`}
+                        >
+                          <Text style={styles.practiceBtnTxt}>Praticar</Text>
+                        </Pressable>
+                      ) : null}
+                      {isDone ? (
+                        <View style={styles.donePill}>
+                          <Ionicons name="checkmark-circle" size={14} color={colors.successDark} />
+                          <Text style={styles.donePillTxt}>Concluído</Text>
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
                 );
               })}
@@ -179,29 +221,13 @@ export function TheoryHubScreen() {
         {lockedModules.map((mod, i) => {
           const phaseNum = activeModules.length + i + 1;
           return (
-            <View key={mod.id} style={[styles.lockedCard, cardShadow]}>
-              <View style={styles.lockedTop}>
-                <View style={styles.lockCircle}>
-                  <Ionicons name="lock-closed" size={22} color="#fff" />
-                </View>
-                <View style={styles.lockedHead}>
-                  <View style={styles.lockedTitleRow}>
-                    <Text style={styles.lockedPhase}>Fase {phaseNum}</Text>
-                    <View style={styles.soonPill}>
-                      <Text style={styles.soonPillTxt}>Em breve</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.lockedName}>{mod.title}</Text>
-                  <Text style={styles.lockedDesc}>{mod.description}</Text>
-                </View>
+            <View key={mod.id} style={[styles.comingSoonCard, cardShadow]}>
+              <View style={styles.comingSoonRow}>
+                <Ionicons name="lock-closed" size={18} color={colors.locked} />
+                <Text style={styles.comingSoonLabel}>Fase {phaseNum} · Em breve</Text>
               </View>
-              <View style={styles.lockedDivider} />
-              <View style={styles.lockedFoot}>
-                <Ionicons name="time-outline" size={18} color={colors.muted} />
-                <Text style={styles.lockedFootTxt}>
-                  Teoria desta fase estará disponível em breve.
-                </Text>
-              </View>
+              <Text style={styles.comingSoonTitle}>{mod.title}</Text>
+              <Text style={styles.comingSoonDesc}>{mod.description}</Text>
             </View>
           );
         })}
@@ -213,177 +239,185 @@ export function TheoryHubScreen() {
 
 const styles = StyleSheet.create({
   shell: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: 20, paddingBottom: 36, gap: 12 },
+  scroll: { padding: 20, paddingBottom: 36, gap: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  h1: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: colors.text,
-    marginBottom: 6,
-  },
-  sub: { color: colors.muted, fontSize: 14, marginBottom: 8, lineHeight: 20 },
-  phaseCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
-    padding: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    marginBottom: 8,
-  },
-  phaseTop: { flexDirection: "row", gap: 14 },
-  phaseBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  phaseBadgeTxt: { color: "#fff", fontSize: 20, fontWeight: "800" },
-  phaseHead: { flex: 1 },
-  phaseLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: colors.primary,
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  phaseTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: 6,
-  },
-  phaseDesc: { fontSize: 13, color: colors.muted, lineHeight: 18 },
-  progressMeta: {
-    marginTop: 14,
-    fontSize: 13,
-    color: colors.muted,
-    marginBottom: 8,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: radius.pill,
-    backgroundColor: colors.border,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-  },
-  lessonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    gap: 12,
-    backgroundColor: colors.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  lessonDone: {
-    backgroundColor: colors.lessonDone,
-    borderColor: "transparent",
-  },
-  lessonOpen: {
-    backgroundColor: colors.lessonOpen,
-    borderColor: "transparent",
-  },
-  lessonLocked: { opacity: 0.55 },
-  lessonIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lessonIconDone: { backgroundColor: colors.success },
-  lessonIconOpen: { backgroundColor: "#E9E4FF" },
-  lessonIconLocked: { backgroundColor: "#E5E7EB" },
-  lessonMain: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    minWidth: 0,
-  },
-  lessonTitleWrap: {
-    flex: 1,
-    minWidth: 0,
-    gap: 6,
-  },
-  lessonTitle: { fontSize: 16, fontWeight: "700", color: colors.text },
-  lessonTitleOff: { color: colors.muted },
-  pratiqueBtn: {
-    flexShrink: 0,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-  },
-  pratiqueBtnTxt: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  completePill: {
-    backgroundColor: colors.successBg,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  completePillTxt: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.successDark,
-  },
-  lockedCard: {
+  hero: {
     backgroundColor: colors.card,
     borderRadius: radius.card,
     padding: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    marginTop: 8,
   },
-  lockedTop: { flexDirection: "row", gap: 12 },
-  lockCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#9CA3AF",
+  heroTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  heroIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.primaryMuted,
     alignItems: "center",
     justifyContent: "center",
   },
-  lockedHead: { flex: 1 },
-  lockedTitleRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
-  lockedPhase: {
-    fontSize: 12,
+  heroTextWrap: { flex: 1 },
+  heroTitle: {
+    fontSize: 22,
     fontWeight: "800",
     color: colors.text,
-    letterSpacing: 0.5,
+    marginBottom: 4,
   },
-  soonPill: {
+  heroSub: { color: colors.muted, fontSize: 13, lineHeight: 19 },
+  heroMetaRow: { marginTop: 12, flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  heroMetaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: "#F3F4F6",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
   },
-  soonPillTxt: { fontSize: 11, fontWeight: "600", color: colors.muted },
-  lockedName: {
-    fontSize: 18,
+  heroMetaTxt: { fontSize: 12, color: colors.text, fontWeight: "600" },
+  moduleSection: { gap: 10 },
+  moduleHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  moduleHeadLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  moduleBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  moduleBadgeTxt: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  moduleLabel: {
+    fontSize: 11,
     fontWeight: "800",
+    color: colors.primary,
+    letterSpacing: 1,
+  },
+  moduleTitle: {
+    fontSize: 19,
+    fontWeight: "700",
     color: colors.text,
-    marginTop: 4,
   },
-  lockedDesc: { fontSize: 13, color: colors.muted, marginTop: 4, lineHeight: 18 },
-  lockedDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
-    marginVertical: 12,
+  moduleReadPill: {
+    backgroundColor: "#EDE9FE",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
   },
-  lockedFoot: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
-  lockedFootTxt: { flex: 1, fontSize: 12, color: colors.muted, lineHeight: 17 },
+  moduleReadPillTxt: { color: colors.primaryText, fontWeight: "700", fontSize: 11 },
+  moduleDesc: { color: colors.muted, fontSize: 13, lineHeight: 18, marginBottom: 2 },
+  topicCard: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    gap: 12,
+  },
+  topicCardLocked: { opacity: 0.6 },
+  topicTop: { flexDirection: "row", gap: 12 },
+  topicIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  topicMain: { flex: 1, gap: 6 },
+  topicTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  topicTitle: { fontSize: 17, fontWeight: "800", color: colors.text, flex: 1 },
+  topicTitleOff: { color: colors.muted },
+  operationPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  operationPillTxt: { fontSize: 11, fontWeight: "700" },
+  topicSummary: {
+    fontSize: 13,
+    color: colors.muted,
+    lineHeight: 19,
+  },
+  topicSummaryOff: { color: "#9CA3AF" },
+  topicFoot: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  metaTxt: { fontSize: 12, color: colors.muted },
+  topicActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  readBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D9DDF0",
+    backgroundColor: "#F7F8FF",
+  },
+  readBtnDisabled: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB" },
+  readBtnTxt: { color: colors.primaryText, fontSize: 13, fontWeight: "700" },
+  readBtnTxtOff: { color: colors.locked },
+  practiceBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+  },
+  practiceBtnTxt: { color: "#fff", fontWeight: "800", fontSize: 13 },
+  donePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.successBg,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  donePillTxt: {
+    color: colors.successDark,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  comingSoonCard: {
+    borderRadius: radius.card,
+    padding: 14,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#D1D5DB",
+    backgroundColor: "#F9FAFB",
+  },
+  comingSoonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+  },
+  comingSoonLabel: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  comingSoonTitle: { color: colors.text, fontSize: 17, fontWeight: "800", marginBottom: 4 },
+  comingSoonDesc: { color: colors.muted, fontSize: 13, lineHeight: 18 },
 });
