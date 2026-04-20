@@ -1,17 +1,17 @@
 {
   "name": "mathning",
   "private": true,
-  "main": "apps/mobile/index.ts",
+  "main": "apps/index.ts",
   "workspaces": [
-    "apps/mobile",
+    "apps",
     "packages/*"
   ],
   "scripts": {
     "build:shared": "npm run build -w @mathning/shared",
-    "start": "expo start ./apps/mobile",
-    "start:clear": "expo start ./apps/mobile --clear",
-    "android": "expo start ./apps/mobile --android",
-    "ios": "expo start ./apps/mobile --ios",
-    "dev:mobile": "npm run build:shared && expo start ./apps/mobile"
+    "start": "expo start ./apps",
+    "start:clear": "expo start ./apps --clear",
+    "android": "expo start ./apps --android",
+    "ios": "expo start ./apps --ios",
+    "dev:mobile": "npm run build:shared && expo start ./apps"
   }
 }
