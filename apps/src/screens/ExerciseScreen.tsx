@@ -1,5 +1,5 @@
 import type { RouteProp } from "@react-navigation/native";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
   answersMatch,
@@ -19,14 +19,17 @@ import {
   TextInput,
   View,
 } from "react-native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuthContext } from "../context/AuthContext";
 import { recordDemoExercise } from "../lib/demoProgress";
 import { isLessonUnlocked } from "../lib/progression";
 import type { RootStackParamList } from "../navigation/types";
 
 type R = RouteProp<RootStackParamList, "Exercise">;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function ExerciseScreen() {
+  const navigation = useNavigation<Nav>();
   const { params } = useRoute<R>();
   const { moduleId, lessonId } = params;
   const { progress, db, uid, demo, updateLocalDemo, refreshProgress } =
@@ -100,6 +103,24 @@ export function ExerciseScreen() {
       <View style={styles.center}>
         <Text style={styles.muted}>Não disponível.</Text>
       </View>
+    );
+  }
+
+  if (lesson.practiceEnabled === false) {
+    return (
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Text style={styles.eyebrow}>Prática</Text>
+        <Text style={styles.h1}>{lesson.title}</Text>
+        <View style={styles.card}>
+          <Text style={styles.muted}>
+            A prática interativa para este assunto ainda não está disponível. Continue estudando a teoria e
+            use as operações básicas para treinar cálculo.
+          </Text>
+          <Pressable style={styles.primaryBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.primaryBtnTxt}>Voltar</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     );
   }
 
