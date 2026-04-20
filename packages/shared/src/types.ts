@@ -1,5 +1,34 @@
 export type Operation = "add" | "subtract" | "multiply" | "divide";
 
+/** Teoria rica para assuntos que não são só operações aritméticas. */
+export interface ConceptTheoryBlock {
+  title: string;
+  body: string;
+}
+
+export interface ConceptTheoryVocabLine {
+  term: string;
+  definition: string;
+}
+
+export interface ConceptTheoryExample {
+  id: string;
+  title: string;
+  expression?: string;
+  visualLines?: string[];
+  armedLines?: string[];
+  explanation: string;
+  note?: string;
+}
+
+export interface ConceptTheory {
+  introTip?: string;
+  conceptBlocks: ConceptTheoryBlock[];
+  vocabulary: ConceptTheoryVocabLine[];
+  ruleNotes: { title: string; text: string }[];
+  examples: ConceptTheoryExample[];
+}
+
 export interface Lesson {
   id: string;
   title: string;
@@ -7,6 +36,10 @@ export interface Lesson {
   operation: Operation;
   /** Índice de dificuldade 1–3 (MVP: controla tamanho dos números) */
   difficultyTier: 1 | 2 | 3;
+  /** Se false, a tela de exercícios mostra aviso (teoria só). Padrão: true. */
+  practiceEnabled?: boolean;
+  /** Quando preenchido, o app usa fluxo de teoria conceitual em vez do fluxo de operações. */
+  conceptTheory?: ConceptTheory;
 }
 
 export interface LearningModule {

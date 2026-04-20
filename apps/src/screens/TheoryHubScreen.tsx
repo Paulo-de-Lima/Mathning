@@ -191,7 +191,7 @@ export function TheoryHubScreen() {
                           {open ? "Ler teoria" : "Bloqueado"}
                         </Text>
                       </Pressable>
-                      {open ? (
+                      {open && lesson.practiceEnabled !== false ? (
                         <Pressable
                           onPress={goPractice}
                           style={({ pressed }) => [

@@ -18,6 +18,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { ConceptTheoryView } from "../components/ConceptTheoryView";
 import { useAuthContext } from "../context/AuthContext";
 import { useAppHeader } from "../hooks/useAppHeader";
 import { markDemoLessonDone } from "../lib/demoProgress";
@@ -407,6 +408,22 @@ export function TheoryScreen() {
   }
 
   const alreadyDone = completed.includes(lessonId);
+
+  if (lesson.conceptTheory) {
+    return (
+      <ConceptTheoryView
+        lesson={lesson}
+        conceptTheory={lesson.conceptTheory}
+        moduleMeta={moduleMeta}
+        navigation={navigation}
+        moduleId={moduleId}
+        lessonId={lessonId}
+        alreadyDone={alreadyDone}
+        onComplete={() => void handleCompleteLesson()}
+      />
+    );
+  }
+
   const operationUi = useMemo(
     () => OPERATION_UI[lesson.operation],
     [lesson.operation],
