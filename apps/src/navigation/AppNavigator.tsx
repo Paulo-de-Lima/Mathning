@@ -37,14 +37,14 @@ export function AppNavigator() {
             options={{ title: "Mathning" }}
           />
           <Stack.Screen
-            name="LearningPath"
-            component={LearningPathScreen}
-            options={{ title: "Trilha" }}
-          />
-          <Stack.Screen
             name="Teoria"
             component={TheoryHubScreen}
             options={{ title: "Teoria" }}
+          />
+          <Stack.Screen
+            name="LearningPath"
+            component={LearningPathScreen}
+            options={{ title: "Trilha" }}
           />
           <Stack.Screen
             name="TheoryDetail"
