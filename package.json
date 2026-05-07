@@ -13,5 +13,10 @@
     "android": "expo start ./apps --android",
     "ios": "expo start ./apps --ios",
     "dev:mobile": "npm run build:shared && expo start ./apps"
+  },
+  "dependencies": {
+    "expo-av": "~16.0.8",
+    "react-dom": "19.1.0",
+    "react-native-web": "^0.21.0"
   }
 }
